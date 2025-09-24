@@ -1,0 +1,117 @@
+In this project the Python interpreter is something that
+is the last step of executing the program
+
+Before the interpreter, there are other steps like:
+lexing, parsing, and compiling
+
+These steps transform the program's source code in structured code object
+containing instructions that interpreter can understand.
+Interpreter job is to take these code objects and perform those instructions.
+
+Python interpreter is a stack machine, so it manipulates the stack
+to add two numbers.
+
+Version 1.1
+Add variables to interpreter
+Variables req. instruction to store value of a variable: STORE_NAME
+also an instruction to fetch the value: LOAD_NAME
+
+Storing the variable mapping in interpreter itself, ignoring namespaces and
+scope for now.
+
+Defining environment dictionary to hold the mapping of names and values.
+Now the arguments can mean two things:
+1. Index for the number over which we need to load
+2. Index for the name
+
+So the STORE_NAME instruction basically pops out the value from the stack
+and stores it in the dictionary for future use.
+Similarly, when you need the variable value, you can call
+LOAD_NAME method to get value and pushed into the stack for
+another instructions.
+
+Using getattr method to look up methods on the run-time
+instead of using IF-ELSE block every time to check for method.
+
+getattr gives you method reference at the run-time
+Example:
+
+class M:
+    def square(self, x):
+        return x * x
+
+m = M()
+sq = getattr(m, "square")
+print(sq(2)) # Gives 4
+
+Frames in Python
+++++++++++++++++
+
+Collection of information + context for the code
+Created and destroyed on the fly as python code executes
+There is a frame associated with each call of the function
+=> Each frame has one code object associated with it,  a code object
+may have multiple frames
+
+If a function calls itself recursively, say 10 times
+then it will have one frame associated to each call, therefore
+10 frames + 1 frame of the module you started from.
+
+In general, there's a frame for each scope in Python program.
+
+Frames live on call stack, completely different stack we have been discussing above
+The lines that we see when an exception occurs in the traceback logs, are
+from the call stack. Each line correspond to one frame in the call stack.
+
+Each frame on call stack has its own data stack and block stack.
+Blocks are used for certain kind of control flow, particularly looping and
+exception handling.
+
+Example:
+
+>>> def bar(y):
+...     z = y + 3     # <--- (3) ... and the interpreter is here.
+...     return z
+...
+>>> def foo():
+...     a = 1
+...     b = 2
+...     return a + bar(b) # <--- (2) ... which is returning a call to bar ...
+...
+>>> foo()             # <--- (1) We're in the middle of a call to foo ...
+
+
+Call Stack (left)                   Runtime Stacks (right)
+------------------------------------------------------------
+
+bar Frame (newest)                  |   Block stack: []
+                                    |   Data stack: [2, 3]
+
+foo Frame                           |   Block stack: []
+                                    |   Data stack: [1]
+
+main (module) Frame                 |   Block stack: []
+(oldest)                            |   Data stack: []
+
+Creating Classes
+++++++++++++++++++++
+
+VirtualMachine:
+1. Highest level structure.
+2. Contains the mapping of instructions to operations. More complex
+version of Interpreter
+
+Frame:
+1. Every Frame instance has one code object, and manages few other bits of state
+particularly global and local namespaces, a reference to the calling frame and
+the last bytecode instruction executed.
+
+Function:
+1. Used in place of real function in python
+2. A function call creates a frame for python interpreter.
+3. We will implement Function class to mimic same functionality
+
+Block:
+1. Wraps 3 attributes of blocks.
+2. Included here so that our project can run real python code
+
