@@ -115,3 +115,15 @@ Block:
 1. Wraps 3 attributes of blocks.
 2. Included here so that our project can run real python code
 
+Namespaces in Python
+++++++++++++++++++++++
+
+Mapping of names to objects
+1. Name is an identifier you use in your code
+Ex: x, my_func, Person
+
+2. Object is the actual value in the memory
+Ex: function, integer, Class
+
+Types of namespaces
+1. Built-in namespaces
