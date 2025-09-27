@@ -7,6 +7,7 @@
 '''
 
 from Frame import Frame
+import dis
 
 class VirtualMachineError(Exception):
     pass
@@ -121,7 +122,76 @@ class VirtualMachine(object):
             return []
 
 
-    # Adding another method that checks and parses the argument and updates last_instruction attribute in frame
+    """
+    
+    1. Adding another method that checks and parses the argument and updates last_instruction attribute in frame
+    2. A instruction is 1 byte long if it doesn't have an argument, 3 bytes if does have an argument and last two bytes are argument for this( depending upon the opcode).
+    3. Meaning of the argument depends upon which instruction it is.
+    
+    Example: POP_JUMP_IF_FALSE: Argument to the instruction is the jump target
+    BUILD_LIST: Number of elements in the list
+    LOAD_CONST: It is an index into list of constants
+    
+    4. The dis module in the standard library exposes a cheatsheet explaining what arguments have what meaning, which makes our code more compact. 
+    For example, the list dis.hasname tells us that the arguments to LOAD_NAME, IMPORT_NAME, LOAD_GLOBAL, and nine other instructions have the same meaning: 
+    for these instructions, the argument represents an index into the list of names on the code object.
+
+    """
+
+    def parse_byte_and_args(self):
+        """
+            Parses single instruction from the bytecode and extracts
+            operation and its argument
+
+            Context: In python, functions get compiled into code_objects that contain:
+            1. co_code: a byte string of bytecode instructions
+            2. co_consts: constants like ( numbers, strings)
+            3. co_names: name of global variables
+            4. co_varnames: local variables
+        """
+
+        f = self.frame # Taking current frame
+        op_offset = f.last_instruction # where we are in bytecode (like an instruction pointer)
+        byte_code = f.code_obj.co_code[op_offset] # numeric opcode (eg: 100 for LOAD_CONST)
+        f.last_instruction += 1 # Moving instruction pointer by 1
+        byte_name = dis.opname[byte_code] # This will give the intelligible name for the instruction
+
+        if byte_code >= dis.HAVE_ARGUMENT: # Some opcode has arguments
+            # If byte_code >= 90 then it means that instruction takes an argument
+            # index into the bytecode
+            arg = f.code_obj.co_code[f.last_instruction: f.last_instruction + 2]
+
+            f.last_instruction += 2 # advance the instruction pointer
+
+            arg_val = arg[0] + (arg[1] * 256)
+
+            if byte_code in dis.hasconst: # Look up a constant
+                arg = f.code_obj.co_const[arg_val]
+
+            elif byte_code in dis.hasname: # Look up a name
+                arg = f.code_obj.co_names[arg_val]
+
+            elif byte_code in dis.haslocal: # Look up a local name
+                arg = f.code_obj.co_varnames[arg_val]
+
+            elif byte_code in dis.hasjrel: # Calculate a relative jump
+                arg = f.last_instruction + arg_val
+
+            else:
+                arg = arg_val
+
+            argument = [arg]
+
+        else:
+            # For instructions with no arguments, return empty list
+            argument = []
+
+        return byte_name, argument
+
+
+
+
+
 
     def run_frame(self):
         pass
