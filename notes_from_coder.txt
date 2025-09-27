@@ -127,3 +127,53 @@ Ex: function, integer, Class
 
 Types of namespaces
 1. Built-in namespaces
+Contains all the built-in names like: len, print, import
+Always available everywhere
+
+2. Global namespaces
+Created when you run a module file
+Hold top level functions, variables and classes
+x = 10 # global
+
+def myfunc(): # global function
+    pass
+
+3. Local namespaces
+Created when a function is called
+Holds params and variables defined in a method.
+
+Accessing Python real bytecode
+++++++++++++++++++++++++++++++++
+
+>>> def cond():
+...     x = 3
+...     if x < 5:
+...         return 'yes'
+...     else:
+...         return 'no'
+
+For function object 'cond',
+cond.__code__ is code object associated and
+cond.__code__.co_code is the bytecode
+
+dis module of python is a bytecode disassembler. A disassembler takes machine level code
+and converts it into human readable format.
+
+
+>>> dis.dis(cond)
+  2           0 LOAD_CONST               1 (3)
+              3 STORE_FAST               0 (x)
+
+  3           6 LOAD_FAST                0 (x)
+              9 LOAD_CONST               2 (5)
+             12 COMPARE_OP               0 (<)
+             15 POP_JUMP_IF_FALSE       22
+
+  4          18 LOAD_CONST               3 ('yes')
+             21 RETURN_VALUE
+
+  6     >>   22 LOAD_CONST               4 ('no')
+             25 RETURN_VALUE
+             26 LOAD_CONST               0 (None)
+             29 RETURN_VALUE
+
