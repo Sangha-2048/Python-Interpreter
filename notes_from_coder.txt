@@ -6,10 +6,24 @@ lexing, parsing, and compiling
 
 These steps transform the program's source code in structured code object
 containing instructions that interpreter can understand.
-Interpreter job is to take these code objects and perform those instructions.
+Interpreter job is to take these code objects and follow those instructions.
 
 Python interpreter is a stack machine, so it manipulates the stack
 to add two numbers.
+
+Python Interpreter is a virtual machine, particularly a stack machine:
+it manipulates several stacks to perform its operations.
+
+Python interpreter is a bytecode interpreter. I/P is instruction sets
+called bytecode.
+Python Code -> Lexer, Parser, Complier -> Generates -> Code objects
+
+Each code object contains a set of instructions to be executed i.e bytecode
+ + other info that the interpreter needs.
+
+
+Here, in this project:
+instructions is basically the bytecode and what_to_execute is code object
 
 Version 1.1
 Add variables to interpreter
@@ -62,6 +76,11 @@ In general, there's a frame for each scope in Python program.
 Frames live on call stack, completely different stack we have been discussing above
 The lines that we see when an exception occurs in the traceback logs, are
 from the call stack. Each line correspond to one frame in the call stack.
+
+Call stack: A Data structure used by python interpreter to store the function calls
+Each time a function is called, the Python pushes a frame onto the stack
+When function finishes its execution -> pops the frame from the stack
+Top of the stack always represent currently executing function
 
 Each frame on call stack has its own data stack and block stack.
 Blocks are used for certain kind of control flow, particularly looping and

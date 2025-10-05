@@ -5,6 +5,7 @@
     It stores call stack, exception state, return values while they are being passed
     between frames
 '''
+import sys
 
 from Frame import Frame
 import dis
@@ -189,9 +190,86 @@ class VirtualMachine(object):
         return byte_name, argument
 
 
+    def dispatch(self, byte_name, argument):
+        """
+            byte_name: name of the python bytecode instruction (LOAD_CONST, BINARY_ADD)
+            argument: arguments associated with the instruction (like constant index, variable name, )
+                        jump target)
+
+            Task: Finding correct handler in VM and runs that handler, executes a single bytecode instruction
+        """
+
+        # Control signal used by VM loop
+        # why might become 'return', 'exception', or 'continue' to indicate why execution flow should change
+        # Used to record why the execution was stopped or paused
+        # Possible reasons include: "return", "exception", "break", "continue"
+        # Part of block stack unwinding mechanism
+
+        why = None
+
+        try:
+            # Looks for a method like byte_RETURN_VALUE or byte_LOAD_CONST
+            byte_code_fn = getattr(self, 'byte_%s' % byte_name, None)
 
 
+            # If no direct method is found, fall back to
+            # 1. UNARY_* byte_codes like (UNARY_NEGATIVE) -> handled by unaryOperator("NEGATIVE")
+            # 2. BINARY_* byte_codes like (BINARY_ADD) -> handled by binaryOperator("ADD")
+            if byte_code_fn is None:
+                if byte_name.startswith('UNARY_'):
+                    self.unaryOperator(byte_name[6:])
+                elif byte_name.startswith('BINARY_'):
+                    self.binaryOperator(byte_name[7:])
+                else:
+                    raise VirtualMachineError("unsupported bytecode type: %s " % byte_name)
+
+            else:
+                # If a specific bytecode handler exists, execute that handler
+                # handler can return a reason, ('return' or 'exception') to indicate next flow of action
+                why = byte_code_fn(*argument)
+
+        except:
+            # Deal with exceptions encountered while executing operations
+            self.last_exception = sys.exc_info()[:2] + (None,)
+            why = 'exception'
+
+        # Returns reason for stopping (or None if normal execution continues)
+        return why
 
 
-    def run_frame(self):
-        pass
+    def run_frame(self, frame):
+        """
+            => Run frame until it returns
+            => Runs an entire frame (a function call context), repeatedly fetching and dispatching bytecode instructions
+                until the frame finishes
+        """
+
+        self.push_frame(frame)
+
+        while True:
+
+            # Fetch next instruction from code object and decode it
+            byte_name, arguments = self.parse_byte_and_args()
+            why = self.dispatch(byte_name, arguments)
+
+            # Deal with any block management we need
+
+            # If something unusual has happened (i.e why is not None) and the frame has active control blocks
+            # like try/ finally -> call manage_block_stack() to unwind block stack properly
+            while why and frame.block_stack:
+                why = self.manage_block_stack(why)
+
+            if why:
+                break
+
+        # Remove current frame from the call stack
+        self.pop_frame()
+
+        if why == 'exception':
+            exc, val, tb = self.last_exception
+            e = exc(val)
+            e.__traceback__ = tb
+            # Re-raise the exception to higher level so that the parent caller method can handle it
+            raise e
+
+        return self.return_value
